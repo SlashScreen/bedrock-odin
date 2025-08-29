@@ -1,0 +1,4 @@
+{
+    "name": "Bedrock Emu",
+    "image": "ghcr.io/slashscreen/odin-ols-devcontainer:latest"
+}
