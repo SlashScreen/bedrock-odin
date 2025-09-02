@@ -4,10 +4,21 @@ import "core:slice"
 PORTS_PER_SLOT :: 16
 SLOT_COUNT :: 16
 
+Device :: struct {
+    ports : map[uint]Port
+}
+
 PortFnOperation :: enum {
     NEXT, 
     STOP,
 }
+
+Port :: struct {
+    write_proc : proc(Byte),
+    read_proc : proc(^Stack)  -> PortFnOperation,
+}
+
+device_bus : [SLOT_COUNT * PORTS_PER_SLOT]Port
 
 port_write_disconnected :: proc(_ : Byte) {}
 
@@ -17,12 +28,6 @@ port_read_disconnected :: proc(dest_stack : ^Stack) -> PortFnOperation {
     return .STOP
 }
 
-Port :: struct {
-    write_proc : proc(Byte),
-    read_proc : proc(^Stack)  -> PortFnOperation,
-}
-
-device_bus : [SLOT_COUNT * PORTS_PER_SLOT]Port
 
 initialize_device_bus :: proc() {
     for i in 0 ..= (SLOT_COUNT * PORTS_PER_SLOT) {
@@ -76,5 +81,14 @@ std :: proc(oi : ^OpInfo) {
     for i : uint = 0; i < width; i+=1 {
         port := device_bus[port_number + Byte(i)]
         port.write_proc(v[i])
+    }
+}
+
+
+// EXTERNAL DEVICES
+
+load_device :: proc(device : ^Device, slot : uint) {
+    for pn, port in device^.ports {
+        device_bus[(PORTS_PER_SLOT * slot) + pn] = port
     }
 }

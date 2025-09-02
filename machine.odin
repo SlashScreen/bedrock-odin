@@ -1,10 +1,12 @@
 package main
 
+import "core:mem"
 import "core:fmt"
 import "core:slice"
 
 PROGRAM_SIZE :: 0xFFFF
 STACK_SIZE :: 0xFF
+BEDROCK_IDENTIFIER :: [10]Byte{0xE8, 0x00, 0x18, 0x42, 0x45, 0x44, 0x52, 0x4F, 0x43, 0x4B}
 
 Stack :: struct {
     pointer : uint,
@@ -63,7 +65,7 @@ stack_pop :: proc(stack : ^Stack, to_value : []Byte) {
 
 // OPS
 
-hlt :: proc(_ : OpInfo) {
+hlt :: proc(_ : ^OpInfo) {
     running = false
 }
 
@@ -167,4 +169,32 @@ sta :: proc(oi : ^OpInfo) {
     stack_pop(stack1, v[:])
 
     rom_write(slice.to_type(x[:], Double), v[:])
+}
+
+// LOAD ROM
+
+load_rom :: proc() {
+    // TODO
+    //remember header https://benbridle.com/projects/bedrock/specification/metadata-specification.html
+}
+
+// LOOP 
+
+init :: proc() {
+    arena := mem.Arena{}
+	context.allocator = mem.arena_allocator(&arena)
+
+	initialize_device_bus()
+
+    load_rom()
+
+    for running == true && program_counter < PROGRAM_SIZE {
+        op := [1]Byte{}
+        rom_read(program_counter, op[:])
+        info := parse_byte_to_opinfo(op[0])
+        
+        op_procs[info.op](&info)
+
+        program_counter += 1
+    }
 }

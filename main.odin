@@ -54,9 +54,61 @@ Op :: enum {
 	NOT = 0x1F,
 }
 
+OpProc :: proc(oi : ^OpInfo)
+
+op_procs := [Op]OpProc{
+	.HLT = hlt,
+	.PSH = psh,
+	.POP = pop,
+	.CPY = cpy,
+	.DUP = dup,
+	.OVR = ovr,	
+	.SWP = swp,
+	.ROT = rot,
+	.JMP = jmp,
+	.JMS = jms,
+	.JCN = jcn,
+	.JCS = jcs,
+	.LDA = lda,
+	.STA = sta,
+	.LDD = ldd,
+	.STD = std,
+	.ADD = add,
+	.SUB = sub,
+	.INC = inc,
+	.DEC = dec,
+	.LTH = lth,
+	.GTH = gth,
+	.EQU = equ,
+	.NQK = nqk,
+	.SHL = shl,
+	.SHR = shr,
+	.ROL = rol,
+	.ROR = ror,
+	.IOR = ior,
+	.XOR = xor,
+	.AND = and,
+	.NOT = not,
+}
+
 OpInfo :: struct {
 	mode : bit_set[Mode; u8],
 	op : Op
+}
+
+parse_byte_to_opinfo :: proc(b : Byte) -> OpInfo {
+	mode := bit_set[Mode; u8]{}
+	if b & 0x80 != 0 {
+		mode |= {.Immediate}
+	}
+	if b & 0x40 != 0 {
+		mode |= {.Wide}
+	}
+	if b & 0x20 != 0 {
+		mode |= {.ReturnStack}
+	}
+	op := Op(b & 0x1F)
+	return OpInfo{mode, op}
 }
 
 // UTILS
